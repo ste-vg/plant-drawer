@@ -1,5 +1,7 @@
 # Plant Drawer
 
+SVG generative flowery plant.
+Demo https://codepen.io/steveg3003/full/BrYyvP/
 
 ### Getting started
 First you need to download the the packages
