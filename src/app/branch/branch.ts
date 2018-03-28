@@ -180,7 +180,7 @@ export class Branch
     private getColor(index:number):string
     {
         let base = ['#646F4B']
-        let greens = ['#6FCAB1', '#5DC4A8', '#4BBD9E', '#3AB795', '#A7CCBA', '#91C0A9', '#86BAA1']
+        let greens = ['#6FCAB1'];//, '#5DC4A8', '#4BBD9E', '#3AB795', '#A7CCBA', '#91C0A9', '#86BAA1']
 
         //return index == 0 ? '#646F4B' : '#77B28C';
         let chooseFrom = index == 0 ? base : greens;
