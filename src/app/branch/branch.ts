@@ -1,6 +1,6 @@
 import { BranchSettings } from "./Settings";
 import { BranchState } from "./State";
-import { TweenLite, Power1 } from "gsap";
+import { TweenMax, Power1 } from "gsap";
 import { Subject } from "rxjs";
 import { Position } from "../Position";
 
@@ -27,8 +27,10 @@ export class Branch
     public state:BranchState = BranchState.ready;
     private placeBehind:Branch;
     
-    public branchOut:Subject<BranchSettings> = new Subject();
+    public branchOut:Subject<Out> = new Subject();
     public thornOut:Subject<Out> = new Subject();
+    public flowerOut:Subject<Out> = new Subject();
+    public leafOut:Subject<Out> = new Subject();
 
     constructor(stage:HTMLElement, settings:BranchSettings, grid:number, placeBehind:Branch = null)
     {
@@ -68,9 +70,9 @@ export class Branch
 
         let widthTarget = settings.sections * 0.6;
 
-        TweenLite.set(branch, {x: -index * 2, y: -index * 2})
+        TweenMax.set(branch, {x: -index * 2, y: -index * 2})
 
-        TweenLite.to(settings, settings.sections * 0.4, {
+        TweenMax.to(settings, settings.sections * 0.4, {
             progress: 0,
             width: widthTarget,
             ease: Power1.easeOut,
@@ -83,23 +85,19 @@ export class Branch
                     let length = settings.length - settings.progress;
                     let pos = branch.getPointAtLength(length);
 
-                    if(choice < 0.02)
-                    {
-                        let sec = Math.ceil((settings.progress / settings.length) * settings.sections) - 2;
+                    let sec = Math.ceil((settings.progress / settings.length) * settings.sections) - 2;
                         if( sec < 4) sec = 4;
-                        this.branchOut.next({
-                            x: pos.x, 
-                            y: pos.y,
-                            sections: sec
-                        })
+
+                    let out:Out = {
+                        position: {x: pos.x, y: pos.y},
+                        width: widthTarget,
+                        sections: sec
                     }
-                    else if(choice < 0.1)
-                    {
-                        this.thornOut.next({
-                            position: {x: pos.x, y: pos.y},
-                            width: widthTarget
-                        })
-                    }
+
+                    if(choice < 0.02) this.branchOut.next(out)
+                    else if(choice < 0.1) this.thornOut.next(out)
+                    else if(choice < 0.2) this.flowerOut.next(out)
+                    else if(choice < 0.4) this.leafOut.next(out)
                 }
             },
             onComplete: () => 
@@ -172,6 +170,10 @@ export class Branch
 
     public clear()
     {
+        this.branchOut.complete();
+        this.thornOut.complete();
+        this.leafOut.complete();
+        this.flowerOut.complete();
         this.branches.map((set: BranchSet) => set.path.remove())
     }
 
