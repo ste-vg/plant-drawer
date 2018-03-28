@@ -32,6 +32,11 @@ export class App
 	private lastMousePosition:Position;
 	private direction:Position;
 
+	private branchGroup:HTMLElement;
+	private thornGroup:HTMLElement;
+	private leafGroup:HTMLElement;
+	private flowerGroup:HTMLElement;
+
 	private grid:number = 40;
 
 	private flowerColors:FlowerColors;
@@ -44,6 +49,12 @@ export class App
 		this.downloadButton = downloadButton;
 		this.container.innerHTML = html;
 		this.svg = document.getElementById('stage');
+
+		this.branchGroup = document.getElementById('branchGroup');
+		this.thornGroup = document.getElementById('thornGroup');
+		this.leafGroup = document.getElementById('leafGroup');
+		this.flowerGroup = document.getElementById('flowerGroup');
+
 		this.onResize();
 
 		this.tick();
@@ -114,12 +125,12 @@ export class App
 			directionY: dy,
 			sections: sections
 		}
-		let newBranch = new Branch(this.svg, settings, this.grid/2 + Math.random() * this.grid/2, this.branches.length > 1 ? this.branches[this.branches.length - 2]: null);
+		let newBranch = new Branch(this.branchGroup, settings, this.grid/2 + Math.random() * this.grid/2, this.branches.length > 1 ? this.branches[this.branches.length - 2]: null);
 		
 		newBranch.branchOut.debounceTime(200).subscribe((out:Out) => this.startBranch(out.sections, out.position))
-		newBranch.thornOut.debounceTime(100).subscribe((out:Out) => this.thorns.push(new Thorn(this.svg, out.position, out.width)))
-		newBranch.flowerOut.debounceTime(300).subscribe((out:Out) => this.flowers.push(new Flower(this.svg, out.position, out.width, this.flowerColors)))
-		newBranch.leafOut.debounceTime(50).subscribe((out:Out) => this.leaves.push(new Leaf(this.svg, out.position, out.width)))
+		newBranch.thornOut.debounceTime(100).subscribe((out:Out) => this.thorns.push(new Thorn(this.thornGroup, out.position, out.width)))
+		newBranch.flowerOut.debounceTime(300).subscribe((out:Out) => this.flowers.push(new Flower(this.flowerGroup, out.position, out.width, this.flowerColors)))
+		newBranch.leafOut.debounceTime(50).subscribe((out:Out) => this.leaves.push(new Leaf(this.leafGroup, out.position, out.width)))
 		this.branches.push(newBranch);
 	}
 
