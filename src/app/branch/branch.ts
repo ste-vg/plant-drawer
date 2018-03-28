@@ -1,23 +1,23 @@
-import { SquiggleSettings } from "./Settings";
-import { SquiggleState } from "./State";
+import { BranchSettings } from "./Settings";
+import { BranchState } from "./State";
 import { TweenLite, Power1 } from "gsap";
 
-interface SquiggleSet
+interface BranchSet
 {
     path: SVGPathElement;
-    settings: SquiggleSettings;
+    settings: BranchSettings;
 }
 
-export class Squiggle
+export class Branch
 {
     private grid:number;
     private stage:HTMLElement;
-    private sqwig:SVGPathElement;
-    private sqwigs: SquiggleSet[] = [];
-    private settings:SquiggleSettings;
-    public state:SquiggleState = SquiggleState.ready;
+    private branch:SVGPathElement;
+    private branches: BranchSet[] = [];
+    private settings:BranchSettings;
+    public state:BranchState = BranchState.ready;
 
-    constructor(stage:HTMLElement, settings:SquiggleSettings, grid:number)
+    constructor(stage:HTMLElement, settings:BranchSettings, grid:number)
     {
         this.grid = grid;
         this.stage = stage;
@@ -25,33 +25,33 @@ export class Squiggle
         settings.width = 0;
         settings.opacity = 1;
 
-        this.state = SquiggleState.animating;
+        this.state = BranchState.animating;
         let path = this.createLine(settings);
-        let sqwigCount:number = 3;
-        for(let i = 0; i < sqwigCount; i++)
+        let branchCount:number = 3;
+        for(let i = 0; i < branchCount; i++)
         {
-            this.createSqwig(i, sqwigCount, path, JSON.parse(JSON.stringify(settings)) as SquiggleSettings, i == sqwigCount - 1)
+            this.createSqwig(i, branchCount, path, JSON.parse(JSON.stringify(settings)) as BranchSettings, i == branchCount - 1)
         }
     }
 
-    createSqwig(index:number, total:number, path:string, settings:SquiggleSettings, forceWhite:boolean)
+    createSqwig(index:number, total:number, path:string, settings:BranchSettings, forceWhite:boolean)
     {
-        let sqwig = document.createElementNS("http://www.w3.org/2000/svg", 'path')
-            sqwig.setAttribute('d', path)
-            sqwig.style.fill = 'none';
-            sqwig.style.stroke = forceWhite ? '#303030' : this.getColor();
-            sqwig.style.strokeLinecap = "round"
+        let branch = document.createElementNS("http://www.w3.org/2000/svg", 'path')
+            branch.setAttribute('d', path)
+            branch.style.fill = 'none';
+            branch.style.stroke = forceWhite ? '#303030' : this.getColor();
+            branch.style.strokeLinecap = "round"
         
-        settings.length =  sqwig.getTotalLength();
+        settings.length =  branch.getTotalLength();
         settings.chunkLength = settings.length / 6; //(settings.sections * 2) + (Math.random() * 40);
         settings.progress = settings.chunkLength;
 
-        sqwig.style.strokeDasharray= `${settings.chunkLength}, ${settings.length + settings.chunkLength}`
-        sqwig.style.strokeDashoffset = `${settings.progress}`
+        branch.style.strokeDasharray= `${settings.chunkLength}, ${settings.length + settings.chunkLength}`
+        branch.style.strokeDashoffset = `${settings.progress}`
 
-        this.stage.appendChild(sqwig);
+        this.stage.appendChild(branch);
 
-        this.sqwigs.unshift({path: sqwig, settings: settings});
+        this.branches.unshift({path: branch, settings: settings});
 
         TweenLite.to(settings, settings.sections * 0.1, {
             progress: - settings.length,
@@ -60,15 +60,15 @@ export class Squiggle
             delay: index * (settings.sections * 0.01),
             onComplete: () => 
             {
-                if(index = total - 1) this.state = SquiggleState.ended;
-                sqwig.remove();
+                if(index = total - 1) this.state = BranchState.ended;
+                branch.remove();
             }
         })
     }
 
     public update()
     {
-        this.sqwigs.map((set: SquiggleSet) => 
+        this.branches.map((set: BranchSet) => 
         {
             set.path.style.strokeDashoffset = `${set.settings.progress}`;
             set.path.style.strokeWidth = `${set.settings.width}px`;
@@ -77,7 +77,7 @@ export class Squiggle
         
     }
 
-    private createLine(settings:SquiggleSettings):string
+    private createLine(settings:BranchSettings):string
     {
         let x = settings.x;
         let y = settings.y;

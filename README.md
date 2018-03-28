@@ -1,7 +1,5 @@
-# SVG squiggles
-Colorful, mouse following, squiggles. Written with Typescript, GSAP and rxjs.
+# Plant Drawer
 
-Demo https://codepen.io/steveg3003/full/qobgBM/
 
 ### Getting started
 First you need to download the the packages
