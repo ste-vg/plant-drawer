@@ -1,4 +1,4 @@
-export enum SquiggleState
+export enum BranchState
 {
     ready,
     animating,

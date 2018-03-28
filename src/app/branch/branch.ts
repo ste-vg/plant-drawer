@@ -1,6 +1,8 @@
 import { BranchSettings } from "./Settings";
 import { BranchState } from "./State";
 import { TweenLite, Power1 } from "gsap";
+import { Subject } from "rxjs";
+import { Position } from "../Position";
 
 interface BranchSet
 {
@@ -8,60 +10,102 @@ interface BranchSet
     settings: BranchSettings;
 }
 
+export interface Out
+{
+    position: Position;
+    width?: number;
+    sections?: number;
+}
+
 export class Branch
 {
     private grid:number;
     private stage:HTMLElement;
     private branch:SVGPathElement;
-    private branches: BranchSet[] = [];
+    public branches: BranchSet[] = [];
     private settings:BranchSettings;
     public state:BranchState = BranchState.ready;
+    private placeBehind:Branch;
+    
+    public branchOut:Subject<BranchSettings> = new Subject();
+    public thornOut:Subject<Out> = new Subject();
 
-    constructor(stage:HTMLElement, settings:BranchSettings, grid:number)
+    constructor(stage:HTMLElement, settings:BranchSettings, grid:number, placeBehind:Branch = null)
     {
-        this.grid = grid;
+        this.grid = 50;//grid;
         this.stage = stage;
+        this.placeBehind = placeBehind;
    
-        settings.width = 0;
+        settings.width = 2;
         settings.opacity = 1;
 
         this.state = BranchState.animating;
         let path = this.createLine(settings);
-        let branchCount:number = 3;
+        let branchCount:number = 2;
         for(let i = 0; i < branchCount; i++)
         {
-            this.createSqwig(i, branchCount, path, JSON.parse(JSON.stringify(settings)) as BranchSettings, i == branchCount - 1)
+            this.createSqwig(i, branchCount, path, JSON.parse(JSON.stringify(settings)) as BranchSettings)
         }
     }
 
-    createSqwig(index:number, total:number, path:string, settings:BranchSettings, forceWhite:boolean)
+    createSqwig(index:number, total:number, path:string, settings:BranchSettings)
     {
         let branch = document.createElementNS("http://www.w3.org/2000/svg", 'path')
             branch.setAttribute('d', path)
             branch.style.fill = 'none';
-            branch.style.stroke = forceWhite ? '#303030' : this.getColor();
-            branch.style.strokeLinecap = "round"
+            branch.style.stroke = this.getColor(index);
+            branch.style.strokeLinecap = "round";
         
-        settings.length =  branch.getTotalLength();
-        settings.chunkLength = settings.length / 6; //(settings.sections * 2) + (Math.random() * 40);
-        settings.progress = settings.chunkLength;
+        settings.length = branch.getTotalLength();
+        settings.progress = settings.length;
 
-        branch.style.strokeDasharray= `${settings.chunkLength}, ${settings.length + settings.chunkLength}`
-        branch.style.strokeDashoffset = `${settings.progress}`
+        branch.style.strokeDasharray= `${settings.length}, ${settings.length}`;
+        branch.style.strokeDashoffset = `${settings.length}`;
 
-        this.stage.appendChild(branch);
+        this.branches.push({path: branch, settings: settings});
+        if(!this.placeBehind) this.stage.appendChild(branch);
+        else this.stage.insertBefore(branch, this.placeBehind.branches[0].path)
 
-        this.branches.unshift({path: branch, settings: settings});
+        let widthTarget = settings.sections * 0.6;
 
-        TweenLite.to(settings, settings.sections * 0.1, {
-            progress: - settings.length,
-            width: settings.sections * 0.9,
+        TweenLite.set(branch, {x: -index * 2, y: -index * 2})
+
+        TweenLite.to(settings, settings.sections * 0.4, {
+            progress: 0,
+            width: widthTarget,
             ease: Power1.easeOut,
-            delay: index * (settings.sections * 0.01),
+            delay: index * (settings.sections * 0.001),
+            onUpdate: () => 
+            {
+                if(index == 0 && settings.sections > 4)
+                {
+                    let choice = Math.random();
+                    let length = settings.length - settings.progress;
+                    let pos = branch.getPointAtLength(length);
+
+                    if(choice < 0.02)
+                    {
+                        let sec = Math.ceil((settings.progress / settings.length) * settings.sections) - 2;
+                        if( sec < 4) sec = 4;
+                        this.branchOut.next({
+                            x: pos.x, 
+                            y: pos.y,
+                            sections: sec
+                        })
+                    }
+                    else if(choice < 0.1)
+                    {
+                        this.thornOut.next({
+                            position: {x: pos.x, y: pos.y},
+                            width: widthTarget
+                        })
+                    }
+                }
+            },
             onComplete: () => 
             {
                 if(index = total - 1) this.state = BranchState.ended;
-                branch.remove();
+                //branch.remove();
             }
         })
     }
@@ -72,7 +116,7 @@ export class Branch
         {
             set.path.style.strokeDashoffset = `${set.settings.progress}`;
             set.path.style.strokeWidth = `${set.settings.width}px`;
-            set.path.style.opacity = `${set.settings.opacity}`;
+            //set.path.style.opacity = `${set.settings.opacity}`;
         })
         
     }
@@ -86,8 +130,8 @@ export class Branch
         let path:string[] = [
             'M',
             '' + x,
-            '' + y,
-            "Q"
+            '' + y
+            
         ]
 
         let steps = settings.sections;
@@ -98,11 +142,14 @@ export class Branch
             return Math.random() < 0.5 ? -1 : 1;
         }
 
+        if(steps * 2 > step) path.push("Q")
+
         while(step < steps * 2)
         {
             step++;
-            x += (dx * (step/ 30)) * this.grid;
-            y += (dy * (step/ 30)) * this.grid;
+            let stepUp = this.stepUp(step);
+            x += (dx * stepUp) * this.grid;
+            y += (dy * stepUp) * this.grid;
             if(step != 1) path.push(',');
             path.push('' + x);
             path.push('' + y);
@@ -113,22 +160,39 @@ export class Branch
                 dy = dy == 0 ? getNewDirection('y', step > 8) : 0;
             }
         }
-        
+
         return path.join(' ');
     }
 
-    private getColor():string
+    private stepUp(step:number):number
     {
-        let offset = Math.round(Math.random() * 100)
-        var r = Math.sin(0.3 * offset) * 100 + 155;
-        var g = Math.sin(0.3 * offset + 2) * 100 + 155;
-        var b = Math.sin(0.3 * offset + 4) * 100 + 155;
-        return "#" + this.componentToHex(r) + this.componentToHex(g) + this.componentToHex(b);
+        let r = Math.random() * 10;
+        return step / (10 + r)
     }
 
-    private componentToHex(c:number) 
+    public clear()
     {
-        var hex = Math.round(c).toString(16);
-        return hex.length == 1 ? "0" + hex : hex;
+        this.branches.map((set: BranchSet) => set.path.remove())
     }
+
+    private getColor(index:number):string
+    {
+        let base = ['#646F4B']
+        let greens = ['#6FCAB1', '#5DC4A8', '#4BBD9E', '#3AB795', '#A7CCBA', '#91C0A9', '#86BAA1']
+
+        //return index == 0 ? '#646F4B' : '#77B28C';
+        let chooseFrom = index == 0 ? base : greens;
+        // let offset = Math.round(Math.random() * 100)
+        // var r = Math.sin(0.3 * offset) * 10 + 100;
+        // var g = Math.sin(0.3 * offset + 2) * 100 + 155;
+        // var b = Math.sin(0.3 * offset + 4) * 10 + 100;
+        //return "#" + this.componentToHex(r) + this.componentToHex(g) + this.componentToHex(b);
+        return chooseFrom[Math.floor(Math.random() * chooseFrom.length)];
+    }
+
+    // private componentToHex(c:number) 
+    // {
+    //     var hex = Math.round(c).toString(16);
+    //     return hex.length == 1 ? "0" + hex : hex;
+    // }
 }

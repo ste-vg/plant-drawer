@@ -1,9 +1,9 @@
-export interface SquiggleSettings
+export interface BranchSettings
 {
     x: number;
     y: number;
-    directionX: number;
-    directionY: number;
+    directionX?: number;
+    directionY?: number;
     length?: number;
     sections: number;
     width?: number;
