@@ -32,7 +32,7 @@ export class Branch
     public flowerOut:Subject<Out> = new Subject();
     public leafOut:Subject<Out> = new Subject();
 
-    constructor(stage:HTMLElement, settings:BranchSettings, grid:number, placeBehind:Branch = null)
+    constructor(stage:HTMLElement, settings:BranchSettings, grid:number, placeBehind:Branch = null, setPath:string = null)
     {
         this.grid = 50;//grid;
         this.stage = stage;
@@ -42,7 +42,7 @@ export class Branch
         settings.opacity = 1;
 
         this.state = BranchState.animating;
-        let path = this.createLine(settings);
+        let path = setPath ? setPath : this.createLine(settings);
         let branchCount:number = 2;
         for(let i = 0; i < branchCount; i++)
         {
