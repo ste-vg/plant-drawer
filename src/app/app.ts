@@ -4,7 +4,6 @@ import { Branch, Out } from "./branch/branch";
 import { BranchSettings } from "./branch/Settings";
 import { BranchState } from './branch/State';
 import { Position } from './Position';
-import { Input } from './input';
 import { Thorn } from "./thorn/thorn";
 
 import { Observable } from "rxjs";
