@@ -50,12 +50,11 @@ export class App
 	// random path
 	private path:string;
 
-	constructor(container:HTMLElement, downloadButton:HTMLElement)
+	constructor(container:HTMLElement)
 	{
 		console.log(Pkg().version);
 
 		this.container = container;
-		this.downloadButton = downloadButton;
 		this.container.innerHTML = html;
 		this.svg = document.getElementById('stage');
 
@@ -67,11 +66,6 @@ export class App
 		this.onResize();
 
 		this.tick();
-
-		
-		Observable.fromEvent(this.downloadButton, 'click')
-			.map((mouseEvent:MouseEvent) => {mouseEvent.preventDefault()})
-			.subscribe(() => this.download());
 		
 		Observable.fromEvent(this.container, 'click')
 			.map((mouseEvent:MouseEvent) => 
@@ -181,21 +175,6 @@ export class App
 		}
 
 		requestAnimationFrame(() => this.tick());
-	}
-
-	private download()
-	{
-		// var serializer = new XMLSerializer();
-		// serializer.serializeToString(this.svg);
-
-		var a = document.createElement('a'), xml, ev;
-		a.download = 'my-amazing-plant(by ste.vg).svg'; // file name
-		xml = (new XMLSerializer()).serializeToString(this.svg); // convert node to xml string
-		a.href = 'data:application/octet-stream;base64,' + btoa(xml); // create data uri
-		// <a> constructed, simulate mouse click on it
-		ev = document.createEvent("MouseEvents");
-		ev.initMouseEvent("click", true, false, self, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-		a.dispatchEvent(ev);
 	}
 
 	private getColor():string
