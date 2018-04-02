@@ -13,7 +13,7 @@ export class Flower
         let petalCount = 8;
         let p = petalCount;
         let rotateAmount = 360 / petalCount;
-        let growRotation = (Math.random() * 80) - 40;
+        let growRotation = (Math.random() * 100) - 50;
 
         while(p > 0)
         {
@@ -25,7 +25,7 @@ export class Flower
                 petal.style.stroke = 'none';
 
             this.petals.push(petal);
-            let rotate = (rotateAmount * p) + Math.random() * 40;
+            let rotate = (rotateAmount * p) + Math.random() * 30;
             
 
             TweenMax.set(petal, {scale:0, x: position.x, y: position.y, rotation: rotate})
@@ -51,9 +51,8 @@ export class Flower
                 petal.style.stroke = 'none';
 
             this.petals.push(petal);
-            let rotate = (rotateAmount * p) + Math.random() * 45;
-            let growRotation = (Math.random() * 80) - 40;
-
+            let rotate = (rotateAmount * p) + Math.random() * 30;
+ 
             TweenMax.set(petal, {scale:0, x: position.x, y: position.y, rotation: rotate})
             TweenMax.to(petal, 12, {scale:1, rotation: '+=' + growRotation, delay: 1 + Math.random(), ease: Elastic.easeOut})
             
